@@ -1,3 +1,5 @@
+const httpsReg = /^https:\/\//
+
 export function wrapperEnv(envOptions) {
   if (!envOptions) return {}
   const result = {}
@@ -23,6 +25,22 @@ export function wrapperEnv(envOptions) {
       process.env[envKey] = envVal
     } else if (typeof envKey === 'object') {
       process.env[envKey] = JSON.stringify(envVal)
+    }
+  }
+  return result
+}
+
+export function createProxy(list = []) {
+  const result = {}
+  for (const [prefix, target] of list) {
+    const isHttps = httpsReg.test(target)
+
+    result[prefix] = {
+      target: target,
+      changeOrigin: true,
+      ws: true,
+      rewrite: (path) => path.replace(new RegExp(`^${prefix}`), ''),
+      ...(isHttps ? { secure: false } : {})
     }
   }
   return result
